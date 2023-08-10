@@ -1,7 +1,7 @@
 streamlit
 pandas
 streamlit_option_menu
-leafmap.foliumap
+leafmap
 PIL
 plotly.express
 folium
