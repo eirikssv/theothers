@@ -21,7 +21,14 @@ def last_cords():
 
 df = last_seddel()
 cords = last_cords()
-
+object_to_date = [  'Dokument salgsdato', 
+                        # 'Dokument versjonstidspunkt', 
+                        # 'Oppdateringstidspunkt', 
+                        'Siste fangstdato',
+                        'Landingsdato',
+                        ]
+for el in object_to_date:
+    df[el] = pd.to_datetime(df[el], dayfirst=True)
 
 
 _, col1, _ = st.columns([1/6,4/6,1/6])
@@ -35,19 +42,32 @@ arter = ['Breiflabb', 'Brosme', 'Gapeflyndre']
 
 
 if selected == 'Sesong':
-    sesong()
-elif selected == 'Historisk':
-    historisk()
-elif selected == 'Min profil':
-    min_profil()
-elif selected == 'Om':
     _, col1, _ = st.columns([1/6,4/6,1/6])
     with col1:
         left, right = st.tabs(['🐟 Fiskeslag', '⚓ Landing'])
         with left:
-            om(df, arter, cords)
+            fiskeslag(df, arter, cords)
         with right:
             sesong()
+
+
+elif selected == 'Historisk':
+    _, col1, _ = st.columns([1/6,4/6,1/6])
+    with col1:
+        historisk()
+elif selected == 'Min profil':
+    _, col1, _ = st.columns([1/6,4/6,1/6])
+    with col1:
+        min_profil()
+elif selected == 'Om':
+    _, col1, _ = st.columns([1/6,4/6,1/6])
+    with col1:
+    
+        st.write('Dev stuff')
+        om(df)
+
+
+
 else:
     st.write('Noe gikk galt')
 

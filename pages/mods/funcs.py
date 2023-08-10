@@ -68,7 +68,7 @@ def min_profil():
     st.write('3+3')
     st.select_slider('Velg type fis', options=['a', 'b', 'c'])
 
-def om(df, arter, cords):
+def fiskeslag(df, arter, cords):
     
     
 
@@ -79,15 +79,15 @@ def om(df, arter, cords):
     For å bruke verktøyet velger du først fiskeart i rullegardinsmenyen. Deretter vil det dukke opp en boble for hver lokasjon som har motatt
     fangst av denne arten innen den siste uke. Ved å trykke på en boble vil du få opp tilleggsinformasjon om fangsten.
 
-    TODO:
-    - Filtrer masterframe på dato (siste uke. Gjøres i The_Others.py og sendes som argument til funksjonen)
-    - Se på popup options
-    - Se på fargekoder ift. alder på fangst
-    - Lag funksjon der man trykker på Kommune, og får listet opp ny df per Mottaker ID. Bruk orgnummer.pkl til å hente forretningsnavn. 
     """)
 
     sel_art = st.selectbox('Velg en art', options=arter)
+    alder = st.slider('Alder på fangst', 0, 7*4*6, 7, 7)
     filt = df[df['Art - FDIR'] == sel_art]
+    latest_date = filt['Landingsdato'].max()
+    start_date = latest_date - pd.Timedelta(days=alder)
+    filt = filt[(filt['Landingsdato'] > start_date) & (filt['Landingsdato'] <= latest_date)]
+
     locs = filt.groupby('Landingskommune')['Produktvekt'].sum().reset_index().query('Produktvekt > 0')
 
     min_bubble = locs['Produktvekt'].min()
@@ -126,8 +126,27 @@ def om(df, arter, cords):
     with col1: 
         map_out = st_folium(m, width=1800, height=1000)
     with col2:
+        st.code('Her kommer info når man klikker på boble')
         try:
             st.write(map_out)
         except:
             st.write(map_out)    
     
+
+def om(df):
+    st.markdown('''
+                
+    TODO:
+    - Filtrer masterframe på dato (siste uke. Gjøres i The_Others.py og sendes som argument til funksjonen)
+    - Se på popup options
+    - Se på fargekoder ift. alder på fangst
+    - Lag funksjon der man trykker på Kommune, og får listet opp ny df per Mottaker ID. Bruk orgnummer.pkl til å hente forretningsnavn. 
+                ''')
+    
+    st.write(df.sort_values(by='Landingsdato', ascending=False).head(20))
+    latest_date = df['Landingsdato'].max()
+    daysback = st.slider('Velg en verdi', 1, 30, 7)
+    start_date = latest_date - pd.Timedelta(days=daysback)
+    dfweek = df[(df['Landingsdato'] > start_date) & (df['Landingsdato'] <= latest_date)]
+    dfweek = dfweek.sort_values(by='Landingsdato', ascending=True)
+    st.write(dfweek)
