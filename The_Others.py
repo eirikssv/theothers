@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 from streamlit_option_menu import option_menu
-import leafmap.foliumap as leafmap
+# import leafmap.foliumap as leafmap
 from pages.mods.funcs import *
 
 
