@@ -6,3 +6,4 @@ Pillow
 plotly.express
 folium
 streamlit_folium
+geopandas
