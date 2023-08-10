@@ -29,6 +29,19 @@ def menu():
     menu_icon="cast", default_index=0, orientation="horizontal")
     return sel
 
+def bubblecolor(latest_date, eval_date):
+    day_diff = (latest_date - eval_date).days
+    if 0 <= day_diff <= 3:
+        return 'green'
+    elif 3 < day_diff <= 5:
+        return 'yellow'
+    elif 5 < day_diff <= 8:
+        return 'orange'
+    else:
+        return 'red'
+
+
+
 def sesong():
     
     df = pd.read_csv('wellbore_exploration_all.csv', 
@@ -60,13 +73,10 @@ def sesong():
 
 def historisk():
     st.markdown('## Historisk')
-    st.write('2+2')
-    st.select_slider('Velg en verdi', options=['a', 'b', 'c'])
 
 def min_profil():
     st.markdown('## Min profil')
-    st.write('3+3')
-    st.select_slider('Velg type fis', options=['a', 'b', 'c'])
+
 
 def fiskeslag(df, arter, cords):
     
@@ -89,12 +99,13 @@ def fiskeslag(df, arter, cords):
     filt = filt[(filt['Landingsdato'] > start_date) & (filt['Landingsdato'] <= latest_date)]
 
     locs = filt.groupby('Landingskommune')['Produktvekt'].sum().reset_index().query('Produktvekt > 0')
-
+    locs.info()
     min_bubble = locs['Produktvekt'].min()
     max_bubble = locs['Produktvekt'].max()
     locs['BubbleSize'] = ((locs['Produktvekt'] - min_bubble) / (max_bubble - min_bubble)) * (10 - 1) + 1
-
-
+    # df['Color'] = df['Landingsdato'].apply(lambda x: date_difference_color(pd.Timestamp("2023-08-10"), x))
+    # locs['Color'] = locs['Landingsdato'].apply(lambda x: bubblecolor(latest_date, x))
+ 
     m = folium.Map(location=[65, 40], zoom_start=5, scrollWheelZoom=False, dragging=True, control_scale=False, prefer_canvas=True, zoom_control=True)
     for i,row in locs.iterrows():
         kommunenavn = row['Landingskommune']
@@ -109,6 +120,7 @@ def fiskeslag(df, arter, cords):
                 radius=row['BubbleSize'],  
                 popup=popup,
                 color='#3186cc',
+                # color=row['Color'],
                 fill=True,
                 fill_color='#3186cc',
                 tooltip=f"{row['Landingskommune']}: {row['Produktvekt']:,.0f} kg",
