@@ -101,8 +101,7 @@ def fiskeslag(df, arter, cords):
 
     # locs = filt.groupby('Landingskommune')['Produktvekt'].sum().reset_index().query('Produktvekt > 0')
     locs = filt.groupby('Navn')['Produktvekt'].sum().reset_index().query('Produktvekt > 0')
-    locs.to_clipboard(decimal=",", sep=";")
-    locs.info()
+
     min_bubble = locs['Produktvekt'].min()
     max_bubble = locs['Produktvekt'].max()
     locs['BubbleSize'] = ((locs['Produktvekt'] - min_bubble) / (max_bubble - min_bubble)) * (10 - 1) + 1
