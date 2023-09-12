@@ -22,10 +22,10 @@ def last_cords():
 df = last_seddel()
 cords = last_cords()
 object_to_date = [  'Dokument salgsdato', 
-                        # 'Dokument versjonstidspunkt', 
-                        # 'Oppdateringstidspunkt', 
-                        'Siste fangstdato',
-                        'Landingsdato',
+                    # 'Dokument versjonstidspunkt', 
+                    # 'Oppdateringstidspunkt', 
+                    'Siste fangstdato',
+                    'Landingsdato',
                         ]
 for el in object_to_date:
     df[el] = pd.to_datetime(df[el], dayfirst=True)
