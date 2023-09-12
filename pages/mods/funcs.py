@@ -7,7 +7,7 @@ import pandas as pd
 from streamlit_folium import st_folium, folium_static
 import folium
 from last_seddel import *
-
+from datetime import datetime
 
 def logo():
     col1, col2, col3 = st.columns([0.4,0.2,0.4])
@@ -92,13 +92,16 @@ def fiskeslag(df, arter, cords):
     """)
 
     sel_art = st.selectbox('Velg en art', options=arter)
-    alder = st.slider('Alder på fangst', 0, 7*4*6, 7, 7)
+    # alder = st.slider('Alder på fangst', 0, 7*4*6, 7, 7)
+    alder = 7*4*6
     filt = df[df['Art - FDIR'] == sel_art]
     latest_date = filt['Landingsdato'].max()
     start_date = latest_date - pd.Timedelta(days=alder)
     filt = filt[(filt['Landingsdato'] > start_date) & (filt['Landingsdato'] <= latest_date)]
 
-    locs = filt.groupby('Landingskommune')['Produktvekt'].sum().reset_index().query('Produktvekt > 0')
+    # locs = filt.groupby('Landingskommune')['Produktvekt'].sum().reset_index().query('Produktvekt > 0')
+    locs = filt.groupby('Navn')['Produktvekt'].sum().reset_index().query('Produktvekt > 0')
+    locs.to_clipboard(decimal=",", sep=";")
     locs.info()
     min_bubble = locs['Produktvekt'].min()
     max_bubble = locs['Produktvekt'].max()
@@ -107,25 +110,44 @@ def fiskeslag(df, arter, cords):
     # locs['Color'] = locs['Landingsdato'].apply(lambda x: bubblecolor(latest_date, x))
  
     m = folium.Map(location=[65, 40], zoom_start=5, scrollWheelZoom=False, dragging=True, control_scale=False, prefer_canvas=True, zoom_control=True)
-    for i,row in locs.iterrows():
-        kommunenavn = row['Landingskommune']
-        if kommunenavn != 'OSLO':
-            lat = cords[cords['Kommunenavn'] == kommunenavn]['Lat'].values[0]
-            lon = cords[cords['Kommunenavn'] == kommunenavn]['Lon'].values[0]
+    # for i,row in locs.iterrows():
+    #     kommunenavn = row['Landingskommune']
+    #     if kommunenavn != 'OSLO':
+    #         lat = cords[cords['Kommunenavn'] == kommunenavn]['Lat'].values[0]
+    #         lon = cords[cords['Kommunenavn'] == kommunenavn]['Lon'].values[0]
             
-            iframe = folium.IFrame('Kommune:' + str(row['Landingskommune']))
-            popup = folium.Popup(iframe, max_width=300, min_width=100)
-            folium.CircleMarker(
-                location=[lat, lon],
-                radius=row['BubbleSize'],  
-                popup=popup,
-                color='#3186cc',
-                # color=row['Color'],
-                fill=True,
-                fill_color='#3186cc',
-                tooltip=f"{row['Landingskommune']}: {row['Produktvekt']:,.0f} kg",
-            ).add_to(m)
-            
+    #         iframe = folium.IFrame('Kommune:' + str(row['Landingskommune']))
+    #         popup = folium.Popup(iframe, max_width=300, min_width=100)
+    #         folium.CircleMarker(
+    #             location=[lat, lon],
+    #             radius=row['BubbleSize'],  
+    #             popup=popup,
+    #             color='#3186cc',
+    #             # color=row['Color'],
+    #             fill=True,
+    #             fill_color='#3186cc',
+    #             tooltip=f"{row['Landingskommune']}: {row['Produktvekt']:,.0f} kg",
+    #         ).add_to(m)
+    for i, row in locs.iterrows():
+        navn = row['Navn']
+        lat = df[df['Navn'] == navn]['Lat'].values[0]
+        lon = df[df['Navn'] == navn]['Lon'].values[0]
+        if pd.isna(lat):
+            continue
+        iframe = folium.IFrame('Mottaker:' + str(row['Navn']))
+        popup = folium.Popup(iframe, max_width=300, min_width=100)
+        folium.CircleMarker(
+            location=[lat, lon],
+            radius=row['BubbleSize'],
+            popup=popup,
+            color='#3186cc',
+            # color=row['Color'],
+            fill=True,
+            fill_color='#3186cc',
+            tooltip=f"{row['Navn']}: {row['Produktvekt']:,.0f} kg",
+        ).add_to(m)
+
+
 
             # folium.Marker(location=[lat, lon], popup=popup, tooltip=row['Landingskommune']).add_to(m)
     # for i,row in df.iterrows():
@@ -138,13 +160,32 @@ def fiskeslag(df, arter, cords):
     with col1: 
         map_out = st_folium(m, width=1800, height=1000)
     with col2:
-        st.code('Her kommer info når man klikker på boble')
-        try:
-            st.write(map_out)
-        except:
-            st.write(map_out)    
-    
 
+        selected_mottak = str(map_out['last_object_clicked_tooltip']).split(':')[0]
+        if selected_mottak == 'None':
+            st.header('Velg en boble')
+        else:
+            tempdf = filt[filt['Navn'] == selected_mottak]
+            st.title(selected_mottak.title())
+            mottak_adresse = df[df['Navn'] == selected_mottak]['Adresse'].values[0]
+            
+            mottak_url = selected_mottak.lower().replace(' ', '+')
+            mottak_url = 'https://www.gulesider.no/' + mottak_url + '/bedrifter/'
+            st.write(f'**Adresse**: {mottak_adresse}, [Gule sider]({mottak_url})')
+            tempdf = tempdf.groupby(['Landingsdato'])['Produktvekt'].sum().reset_index().sort_values(by='Landingsdato', ascending=False)
+            st.header(f'Siste landinger av {sel_art.lower()}:')
+            for i, row in tempdf.iterrows():
+                #calculate how many days between today and row['Landingsdato']
+                today = datetime.today()
+                days = (today - row['Landingsdato']).days
+
+                
+
+
+
+                st.write(f"**{row['Landingsdato'].strftime('%d.%m.%Y')}:** {row['Produktvekt']:,.0f} kg, {days} dager siden")
+
+            
 def om(df):
     st.markdown('''
                 

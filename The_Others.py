@@ -11,7 +11,7 @@ st.set_page_config(layout="wide",
 
 @st.cache_data
 def last_seddel():
-    df = pd.read_csv('others.csv')
+    df = pd.read_csv('others_with_coordinates.csv')
     return df
 
 @st.cache_data
@@ -48,7 +48,7 @@ if selected == 'Sesong':
         with left:
             fiskeslag(df, arter, cords)
         with right:
-            sesong()
+            st.write('Landing')
 
 
 elif selected == 'Historisk':
