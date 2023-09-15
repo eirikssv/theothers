@@ -3,11 +3,13 @@ from streamlit_option_menu import option_menu
 from PIL import Image 
 # import leafmap.foliumap as leafmap
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
 from streamlit_folium import st_folium, folium_static
 import folium
 from last_seddel import *
 from datetime import datetime
+import calendar
 
 def logo():
     col1, col2, col3 = st.columns([0.4,0.2,0.4])
@@ -170,21 +172,160 @@ def fiskeslag(df, arter, cords):
             
             mottak_url = selected_mottak.lower().replace(' ', '+')
             mottak_url = 'https://www.gulesider.no/' + mottak_url + '/bedrifter/'
-            st.write(f'**Adresse**: {mottak_adresse}, [Gule sider]({mottak_url})')
-            tempdf = tempdf.groupby(['Landingsdato'])['Produktvekt'].sum().reset_index().sort_values(by='Landingsdato', ascending=False)
+            st.write(f'**:world_map:** {mottak_adresse}, :link: [Gule sider]({mottak_url})')
+            tempdf = tempdf.groupby(['Landingsdato', 'Konserveringsmåte'])['Produktvekt'].sum().reset_index().sort_values(by='Landingsdato', ascending=False)
+            fig = go.Figure()
+            #remove y axis
+            fig.update_yaxes(visible=False, showticklabels=False)
+            
+            fig.add_trace(go.Bar(x=tempdf.head(10)['Landingsdato'], y=tempdf.head(10)['Produktvekt'], 
+                                name='Produktvekt',
+                                text=tempdf.head(10)['Produktvekt'],
+                                textposition='outside',
+                                texttemplate='%{y:.0f} kg',
+                                ))
+            #increase font size
+            fig.update_layout(uniformtext_minsize=16, uniformtext_mode='show', height=200)
+            #tight margins
+            fig.update_layout(margin=dict(l=0, r=0, t=20, b=0))
+
+            st.plotly_chart(fig, use_container_width=True)
             st.header(f'Siste landinger av {sel_art.lower()}:')
-            for i, row in tempdf.iterrows():
+
+            tempdf = filt[filt['Navn'] == selected_mottak]
+            tempdf.sort_values(by='Landingsdato', ascending=False, inplace=True)
+            
+            for i, row in tempdf.head(8).iterrows():
                 #calculate how many days between today and row['Landingsdato']
                 today = datetime.today()
                 days = (today - row['Landingsdato']).days
-
+                kilo = row['Produktvekt']
+                tilstand1 = row['Konserveringsmåte']
+                if tilstand1 == 'Fersk/ukonservert':
+                    tilstand1 = 'Fersk'
+                tilstand2 = row['Produkttilstand']
+                st.info(f'''
+                **{kilo:.0f} kg** landet for **{days} dager** siden. Tilstand: **{tilstand2.lower()}**, levert **{tilstand1.lower()}**.
                 
+                ''', icon="🐟")
+                # col2.markdown(f"**{kilo} kg landet for {days} dager siden**")
+                # col2.markdown
+                # st.write(f"**{row['Landingsdato'].strftime('%d.%m.%Y')}:** {row['Produktvekt']:,.0f} kg, {days} dager siden, konserv {row['Konserveringsmåte']}")
 
+    if sel_art == 'Breiflabb':
+        st.title('Breiflabb')
+        col1, col2 = st.columns([12,12])
+        with col2: 
+            st.image('imgs/Monkfish.jpg', width=600)
+        with col1:
+            st.markdown('''
+            Breiflabben kan bli opptil 200 cm lang og veie mer enn 98 kg, men er vanligvis betydelig mindre. Hunnfisken blir mye større enn hannfisken (kjønnsdimorfisme). Verdensrekorden var på 99,4 kg, 
+            tatt på garn av Kåre Haugland og John Arne Mostraum på Hjelmås i Hordaland i februar 2010, frem til 7. januar 2012 da Frank-Rune Kopperud fikk en på 115 kg i garnet i Høylandssundet i Kvinnherad. Det er fanget flere eksemplarer på over 70 kg.
 
+            Breiflabben er som oftest brun, lysebrun eller grå i fargen med mørkere flekker eller områder. Buken er helt hvit. Kroppen er flattrykt med et veldig bredt hode som utgjør nesten halve lengden av fisken. 
+            Det kan se ut som om den bare består av hode og hale. Under haken har breiflabben en rekke hudfliker. Den fremste finnestrålen i første ryggfinne er omdannet til et «fiskeredskap» som den bruker for å lokke til seg andre fisker. 
+            Brystfinnene er runde og meget store. Breiflabben er en mester i kamuflasje og går omtrent i ett med bunnen.
+            Breiflabben blir ofte observert halvveis nedgravet i sand og er lett å overse på grunn av sin gode kamuflasje. Den er en typisk bunnfisk og lever fra fjæra og ned mot 2000 m. Den trives best på bløtbunn, men det er ikke uvanlig å finne den på hardbunn.
 
-                st.write(f"**{row['Landingsdato'].strftime('%d.%m.%Y')}:** {row['Produktvekt']:,.0f} kg, {days} dager siden")
+            Breiflabben ligger helt urørlig på bunnen og lokker til seg nysgjerrige byttedyr med «fiskeredskapen» sin. Når byttet er nære nok sluker den det. Andre fisker er den vanligste føden, men breiflabben kan også ta dykkende fugler.
 
-            
+            Under gytingen på våren trekker breiflabben ned på store dyp. Når eggene er nyklekte henger de sammen i lange geleaktige bånd på opptil 10 m som flyter opp mot overflaten. Yngelen lever pelagisk frem til den er omtrent 6 cm, da søker den mot bunnen.
+            *((Eksempeltekst, hentet fra Wikipedia))*
+            ''')
+        figdf = filt.sort_values(by='Landingsdato')
+        months = list(range(1,13))
+        monthnames = ['Januar', 'Februar', 'Mars', 'April', 'Mai', 'Juni', 'Juli', 'August','September', 'Oktober', 'November', 'Desember']
+        figdf['week'] = figdf['Landingsdato'].dt.month
+        figdf.sort_values(by='week', ascending=True, inplace=True)
+        sumall = figdf['Produktvekt'].sum()
+        avgall = figdf['Produktvekt'].mean()
+        figdf = figdf.groupby(['week'])['Produktvekt'].sum().reset_index()
+        figdf['share'] = figdf['Produktvekt'] / sumall
+        figdf['access'] = figdf['Produktvekt'] / avgall
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(x=figdf['week'], y=figdf['share'], name='Produktvekt'))
+        #tight margins
+        fig.update_layout(margin=dict(l=0, r=0, t=40, b=0), title='Tilgjengelighet gjennom året', height=250)
+        fig.update_xaxes(tickvals=months, ticktext=monthnames)
+        fig.update_yaxes(tickformat='.0%')
+        st.plotly_chart(fig, use_container_width=True)
+    elif sel_art == 'Brosme':
+        st.title('Brosme')
+        col1, col2 = st.columns([12,12])
+        with col2: 
+            st.image('imgs/brosme.jpg', width=600)
+        with col1:
+            st.markdown('''
+            Breiflabben kan bli opptil 200 cm lang og veie mer enn 98 kg, men er vanligvis betydelig mindre. Hunnfisken blir mye større enn hannfisken (kjønnsdimorfisme). Verdensrekorden var på 99,4 kg, 
+            tatt på garn av Kåre Haugland og John Arne Mostraum på Hjelmås i Hordaland i februar 2010, frem til 7. januar 2012 da Frank-Rune Kopperud fikk en på 115 kg i garnet i Høylandssundet i Kvinnherad. Det er fanget flere eksemplarer på over 70 kg.
+
+            Breiflabben er som oftest brun, lysebrun eller grå i fargen med mørkere flekker eller områder. Buken er helt hvit. Kroppen er flattrykt med et veldig bredt hode som utgjør nesten halve lengden av fisken. 
+            Det kan se ut som om den bare består av hode og hale. Under haken har breiflabben en rekke hudfliker. Den fremste finnestrålen i første ryggfinne er omdannet til et «fiskeredskap» som den bruker for å lokke til seg andre fisker. 
+            Brystfinnene er runde og meget store. Breiflabben er en mester i kamuflasje og går omtrent i ett med bunnen.
+            Breiflabben blir ofte observert halvveis nedgravet i sand og er lett å overse på grunn av sin gode kamuflasje. Den er en typisk bunnfisk og lever fra fjæra og ned mot 2000 m. Den trives best på bløtbunn, men det er ikke uvanlig å finne den på hardbunn.
+
+            Breiflabben ligger helt urørlig på bunnen og lokker til seg nysgjerrige byttedyr med «fiskeredskapen» sin. Når byttet er nære nok sluker den det. Andre fisker er den vanligste føden, men breiflabben kan også ta dykkende fugler.
+
+            Under gytingen på våren trekker breiflabben ned på store dyp. Når eggene er nyklekte henger de sammen i lange geleaktige bånd på opptil 10 m som flyter opp mot overflaten. Yngelen lever pelagisk frem til den er omtrent 6 cm, da søker den mot bunnen.
+            *((Eksempeltekst, hentet fra Wikipedia))*
+            ''')
+        figdf = filt.sort_values(by='Landingsdato')
+        months = list(range(1,13))
+        monthnames = ['Januar', 'Februar', 'Mars', 'April', 'Mai', 'Juni', 'Juli', 'August','September', 'Oktober', 'November', 'Desember']
+        figdf['week'] = figdf['Landingsdato'].dt.month
+        figdf.sort_values(by='week', ascending=True, inplace=True)
+        sumall = figdf['Produktvekt'].sum()
+        avgall = figdf['Produktvekt'].mean()
+        figdf = figdf.groupby(['week'])['Produktvekt'].sum().reset_index()
+        figdf['share'] = figdf['Produktvekt'] / sumall
+        figdf['access'] = figdf['Produktvekt'] / avgall
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(x=figdf['week'], y=figdf['share'], name='Produktvekt'))
+        #tight margins
+        fig.update_layout(margin=dict(l=0, r=0, t=40, b=0), title='Tilgjengelighet gjennom året', height=250)
+        fig.update_xaxes(tickvals=months, ticktext=monthnames)
+        fig.update_yaxes(tickformat='.0%')
+        st.plotly_chart(fig, use_container_width=True)
+    elif sel_art == 'Gapeflyndre':
+        st.title('Gapeflyndre')
+        col1, col2 = st.columns([12,12])
+        with col2: 
+            st.image('imgs/gapeflyndre.jpg', width=600)
+        with col1:
+            st.markdown('''
+            Breiflabben kan bli opptil 200 cm lang og veie mer enn 98 kg, men er vanligvis betydelig mindre. Hunnfisken blir mye større enn hannfisken (kjønnsdimorfisme). Verdensrekorden var på 99,4 kg, 
+            tatt på garn av Kåre Haugland og John Arne Mostraum på Hjelmås i Hordaland i februar 2010, frem til 7. januar 2012 da Frank-Rune Kopperud fikk en på 115 kg i garnet i Høylandssundet i Kvinnherad. Det er fanget flere eksemplarer på over 70 kg.
+
+            Breiflabben er som oftest brun, lysebrun eller grå i fargen med mørkere flekker eller områder. Buken er helt hvit. Kroppen er flattrykt med et veldig bredt hode som utgjør nesten halve lengden av fisken. 
+            Det kan se ut som om den bare består av hode og hale. Under haken har breiflabben en rekke hudfliker. Den fremste finnestrålen i første ryggfinne er omdannet til et «fiskeredskap» som den bruker for å lokke til seg andre fisker. 
+            Brystfinnene er runde og meget store. Breiflabben er en mester i kamuflasje og går omtrent i ett med bunnen.
+            Breiflabben blir ofte observert halvveis nedgravet i sand og er lett å overse på grunn av sin gode kamuflasje. Den er en typisk bunnfisk og lever fra fjæra og ned mot 2000 m. Den trives best på bløtbunn, men det er ikke uvanlig å finne den på hardbunn.
+
+            Breiflabben ligger helt urørlig på bunnen og lokker til seg nysgjerrige byttedyr med «fiskeredskapen» sin. Når byttet er nære nok sluker den det. Andre fisker er den vanligste føden, men breiflabben kan også ta dykkende fugler.
+
+            Under gytingen på våren trekker breiflabben ned på store dyp. Når eggene er nyklekte henger de sammen i lange geleaktige bånd på opptil 10 m som flyter opp mot overflaten. Yngelen lever pelagisk frem til den er omtrent 6 cm, da søker den mot bunnen.
+            *((Eksempeltekst, hentet fra Wikipedia))*
+            ''')
+        figdf = filt.sort_values(by='Landingsdato')
+        months = list(range(1,13))
+        monthnames = ['Januar', 'Februar', 'Mars', 'April', 'Mai', 'Juni', 'Juli', 'August','September', 'Oktober', 'November', 'Desember']
+        figdf['week'] = figdf['Landingsdato'].dt.month
+        figdf.sort_values(by='week', ascending=True, inplace=True)
+        sumall = figdf['Produktvekt'].sum()
+        avgall = figdf['Produktvekt'].mean()
+        figdf = figdf.groupby(['week'])['Produktvekt'].sum().reset_index()
+        figdf['share'] = figdf['Produktvekt'] / sumall
+        figdf['access'] = figdf['Produktvekt'] / avgall
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(x=figdf['week'], y=figdf['share'], name='Produktvekt'))
+        #tight margins
+        fig.update_layout(margin=dict(l=0, r=0, t=40, b=0), title='Tilgjengelighet gjennom året', height=250)
+        fig.update_xaxes(tickvals=months, ticktext=monthnames)
+        fig.update_yaxes(tickformat='.0%')
+        st.plotly_chart(fig, use_container_width=True)
 def om(df):
     st.markdown('''
                 
