@@ -27,12 +27,16 @@ sys.modules['plotly.express'] = plotly_module.express
 sys.modules['plotly.graph_objects'] = plotly_module.graph_objects
 
 sys.modules['last_seddel'] = types.ModuleType('last_seddel')
-pd_module = types.ModuleType('pandas')
-class DummyDataFrame(list):
-    def __init__(self, data=None):
-        super().__init__(data or [])
-pd_module.DataFrame = DummyDataFrame
-sys.modules['pandas'] = pd_module
+
+pandas_module = types.ModuleType('pandas')
+pandas_module.DataFrame = object
+sys.modules['pandas'] = pandas_module
+
+# Provide a dummy requests module
+requests_module = types.ModuleType('requests')
+requests_module.get = lambda *args, **kwargs: None
+sys.modules['requests'] = requests_module
+
 
 # Provide minimal Pillow structure
 PIL_module = types.ModuleType('PIL')
