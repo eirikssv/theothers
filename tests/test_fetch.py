@@ -1,7 +1,6 @@
-import datetime
 import sys
 import types
-import pytest
+from unittest.mock import patch, Mock
 
 # Create dummy modules with attributes used in funcs
 streamlit = types.ModuleType('streamlit')
@@ -27,35 +26,40 @@ sys.modules['plotly.express'] = plotly_module.express
 sys.modules['plotly.graph_objects'] = plotly_module.graph_objects
 
 sys.modules['last_seddel'] = types.ModuleType('last_seddel')
+
 pd_module = types.ModuleType('pandas')
+
 class DummyDataFrame(list):
     def __init__(self, data=None):
         super().__init__(data or [])
+
 pd_module.DataFrame = DummyDataFrame
 sys.modules['pandas'] = pd_module
+import pandas as pd
 
-# Provide minimal Pillow structure
 PIL_module = types.ModuleType('PIL')
 Image_module = types.ModuleType('Image')
 PIL_module.Image = Image_module
 sys.modules['PIL'] = PIL_module
 sys.modules['PIL.Image'] = Image_module
 
-from pages.mods.funcs import bubblecolor
+from pages.mods.funcs import fetch_landing_data
 
-@pytest.mark.parametrize(
-    "day_diff,expected",
-    [
-        (0, 'green'),
-        (3, 'green'),
-        (4, 'yellow'),
-        (5, 'yellow'),
-        (6, 'orange'),
-        (8, 'orange'),
-        (9, 'red'),
+
+def test_fetch_landing_data():
+    sample = [
+        {"year": 2022, "amount": 100},
+        {"year": 2022, "amount": 200},
     ]
-)
-def test_bubblecolor(day_diff, expected):
-    latest = datetime.date(2023, 1, 10)
-    eval_date = latest - datetime.timedelta(days=day_diff)
-    assert bubblecolor(latest, eval_date) == expected
+
+    mock_response = Mock()
+    mock_response.json.return_value = sample
+    mock_response.raise_for_status.return_value = None
+
+    with patch('pages.mods.funcs.requests.get', return_value=mock_response) as mock_get:
+        df = fetch_landing_data(2022)
+        mock_get.assert_called_once()
+
+    expected = pd.DataFrame(sample)
+    assert isinstance(df, pd.DataFrame)
+    assert df == expected

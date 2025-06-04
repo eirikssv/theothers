@@ -10,6 +10,7 @@ import folium
 from last_seddel import *
 from datetime import datetime
 import calendar
+import requests
 
 def logo():
     col1, col2, col3 = st.columns([0.4,0.2,0.4])
@@ -41,6 +42,26 @@ def bubblecolor(latest_date, eval_date):
         return 'orange'
     else:
         return 'red'
+
+
+def fetch_landing_data(year: int) -> pd.DataFrame:
+    """Fetch landing data for the given year.
+
+    Parameters
+    ----------
+    year : int
+        Year to fetch data for.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame constructed from JSON response.
+    """
+    url = f"https://example.com/api/landings/{year}"
+    response = requests.get(url)
+    response.raise_for_status()
+    data = response.json()
+    return pd.DataFrame(data)
 
 
 
