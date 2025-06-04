@@ -44,6 +44,26 @@ def bubblecolor(latest_date, eval_date):
         return 'red'
 
 
+def fetch_landing_data(year: int) -> pd.DataFrame:
+    """Fetch landing data for the given year.
+
+    Parameters
+    ----------
+    year : int
+        Year to fetch data for.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame constructed from JSON response.
+    """
+    url = f"https://example.com/api/landings/{year}"
+    response = requests.get(url)
+    response.raise_for_status()
+    data = response.json()
+    return pd.DataFrame(data)
+
+
 
 def sesong():
     
