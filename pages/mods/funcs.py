@@ -10,6 +10,7 @@ import folium
 from last_seddel import *
 from datetime import datetime
 import calendar
+import requests
 
 def logo():
     col1, col2, col3 = st.columns([0.4,0.2,0.4])
@@ -73,8 +74,37 @@ def sesong():
     
     
 
+def fetch_landing_data(year: int) -> pd.DataFrame:
+    """Fetch historical landing data from fiskeridir.no for a given year."""
+    base_url = "https://api.fiskeridir.no/landings/api/v1/landing"
+    params = {"year": year, "format": "json"}
+    r = requests.get(base_url, params=params, timeout=10)
+    r.raise_for_status()
+    data = r.json()
+    # If the API returns a dict with 'data' key use that, otherwise assume list
+    if isinstance(data, dict) and "data" in data:
+        data = data["data"]
+    return pd.DataFrame(data)
+
+
 def historisk():
+    """Display historical landing statistics fetched from fiskeridir.no."""
     st.markdown('## Historisk')
+    year = st.slider('År', 2010, datetime.now().year, datetime.now().year - 1)
+    if st.button('Hent data'):
+        with st.spinner('Henter data fra fiskeridir.no...'):
+            try:
+                df = fetch_landing_data(year)
+                df['landingDate'] = pd.to_datetime(df.get('landingDate', df.iloc[:,0]))
+                df['month'] = df['landingDate'].dt.month
+                df['quantity'] = pd.to_numeric(df.get('quantity', df.iloc[:,1]), errors='coerce')
+                agg = df.groupby('month')['quantity'].sum().reset_index()
+                fig = px.bar(agg, x='month', y='quantity',
+                             labels={'month': 'Måned', 'quantity': 'Mengde (kg)'},
+                             title=f'Landinger {year}')
+                st.plotly_chart(fig, use_container_width=True)
+            except Exception as e:
+                st.error(f'Kunne ikke hente data: {e}')
 
 def min_profil():
     st.markdown('## Min profil')
