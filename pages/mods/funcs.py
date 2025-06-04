@@ -106,7 +106,11 @@ def fiskeslag(df, arter, cords):
 
     min_bubble = locs['Produktvekt'].min()
     max_bubble = locs['Produktvekt'].max()
-    locs['BubbleSize'] = ((locs['Produktvekt'] - min_bubble) / (max_bubble - min_bubble)) * (10 - 1) + 1
+    if max_bubble == min_bubble:
+        # Avoid division by zero if only a single location is present
+        locs['BubbleSize'] = 5
+    else:
+        locs['BubbleSize'] = ((locs['Produktvekt'] - min_bubble) / (max_bubble - min_bubble)) * (10 - 1) + 1
     # df['Color'] = df['Landingsdato'].apply(lambda x: date_difference_color(pd.Timestamp("2023-08-10"), x))
     # locs['Color'] = locs['Landingsdato'].apply(lambda x: bubblecolor(latest_date, x))
  
