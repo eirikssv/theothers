@@ -3,8 +3,7 @@ pandas==1.5.2
 streamlit_option_menu
 leafmap
 Pillow
-plotly.express
+plotly
 folium
 streamlit_folium
 geopandas
-datetime
