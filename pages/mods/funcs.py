@@ -87,8 +87,8 @@ def fiskeslag(df, arter, cords):
     st.markdown(
     """
     Denne siden gir deg oversikt over forrige ukes landinger i Norge, på den fiskearten du selv velger.
-    På kartet tegnes bobler som viser informasjom om tilgjengelig mengde (boblestørrelse) og alder på fangst (farge).
-    For å bruke verktøyet velger du først fiskeart i rullegardinsmenyen. Deretter vil det dukke opp en boble for hver lokasjon som har motatt
+    På kartet tegnes bobler som viser informasjon om tilgjengelig mengde (boblestørrelse) og alder på fangst (farge).
+    For å bruke verktøyet velger du først fiskeart i rullegardinsmenyen. Deretter vil det dukke opp en boble for hver lokasjon som har mottatt
     fangst av denne arten innen den siste uke. Ved å trykke på en boble vil du få opp tilleggsinformasjon om fangsten.
 
     """)
