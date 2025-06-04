@@ -337,7 +337,7 @@ def om(df):
     - Filtrer masterframe på dato (siste uke. Gjøres i The_Others.py og sendes som argument til funksjonen)
     - Se på popup options
     - Se på fargekoder ift. alder på fangst
-    - Lag funksjon der man trykker på Kommune, og får listet opp ny df per Mottaker ID. Bruk orgnummer.pkl til å hente forretningsnavn. 
+    - Lag funksjon der man trykker på Kommune, og får listet opp ny df per Mottaker ID. Hent forretningsnavn fra Brønnøysundregistrene eller tilsvarende datakilde.
                 ''')
     
     st.write(df.sort_values(by='Landingsdato', ascending=False).head(20))
